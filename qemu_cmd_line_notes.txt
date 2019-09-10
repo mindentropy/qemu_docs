@@ -1,0 +1,78 @@
+1) Qemu startup:
+   ------------
+bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -initrd ../../build/initramfs-busybox-x86.cpio.gz -kernel ../../mainline_kernel/arch/x86_64/boot/bzImage -nographic -append "console=ttyS0" -enable-kvm -L pc-bios
+
+bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_linux/linux/arch/x86_64/boot/bzImage -initrd ../busybox/build/initramfs_busybox.cpio.gz -nographic -append "console=ttyS0 ip=dhcp" -L pc-bios -enable-kvm -m 1G -smp 2 -device e1000,netdev=user.0 -netdev user,id=user.0
+
+
+2) Busybox build:
+   -------------
+	a) Separate build directory:
+      -------------------------
+		1) Change to busybox directory -> cd <dir>/busybox
+      	2) Create build directory -> mkdir -pv ../build/busybox-1.31.0
+	  	3) Use a defconfig -> make O=../build/busybox-1.31.0 defconfig
+		4) To select options do a make menuconfig and select static linking
+			-> make O=../build/busybox-1.31.0 menuconfig
+    b) Build busybox in the build directory:
+       ------------------------------------
+		1) cd ../build/busybox-1.31.0
+		2) make -j10
+		3) make install
+    c) Create a initramfs:
+	   ------------------
+		1) mkdir -pv ../build/initramfs
+		2) cd ../build/initramfs
+		3) mkdir -pv {bin,sbin,etc,proc,sys,tmp,usr/{bin,sbin}}
+        4) cp -av ../busybox-1.31.0/_install/* .
+		5) Create a init as follows:
+			
+			-------------------------------------------
+			#!/bin/sh
+			
+			mount -t proc none /proc
+			mount -t sysfs none /sys
+			mount -t debugfs none /sys/kernel/debug
+			#mount -t configfs none /sys/kernel/config
+			mount -t tmpfs none /tmp
+			mount -t tmpfs -o size=64k,mode=0755 tmpfs /dev
+			mkdir /dev/pts
+			mount -t devpts devpts /dev/pts
+			
+			echo -e "\nBoot took $(cut -d' ' -f1 /proc/uptime) seconds\n"
+			
+			exec /bin/sh
+			
+			mdev -s	
+			-------------------------------------------
+		6) Set the init to executable:
+			chmod +x init
+		7) Generate the initramfs file:
+			find . -print0 \
+			| cpio --null -ov --format=newc \
+			| gzip -9 > ../initramfs-busybox-x86.cpio.gz
+
+3) Basic Kernel build:
+   ==================
+	a) Clone mainline linux kernel
+	b) Change to the cloned directory
+	c) Use the base x86_64 defconfig for a base .config
+		-> make x86_64_defconfig
+	d) Use kvmconfig for optimized config for virtualized systems (Appended to the base .config)
+       	-> make kvmconfig
+    e) Build!!
+       	-> make -j10
+    
+    Misc:
+	----
+	a) Enable CONFIG_UEVENT_HELPER for mdev
+
+
+4) Qemu Ubuntu image creation:
+   ==========================
+   a) qemu-img create ubuntu-image.img 5g
+   b) mkfs.ext4 ubuntu-image.img
+   c) sudo mount -o loop ubuntu-image.img img_mnt
+   d) sudo debootstrap --arch amd64 disco img_mnt
+   e) sudo umount img_mnt
+   
