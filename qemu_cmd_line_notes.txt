@@ -70,9 +70,26 @@ bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_linux/lin
 
 4) Qemu Ubuntu image creation:
    ==========================
-   a) qemu-img create ubuntu-image.img 5g
-   b) mkfs.ext4 ubuntu-image.img
-   c) sudo mount -o loop ubuntu-image.img img_mnt
-   d) sudo debootstrap --arch amd64 disco img_mnt
-   e) sudo umount img_mnt
-   
+	a) qemu-img create ubuntu-image.img 5g
+	b) mkfs.ext4 ubuntu-image.img
+	c) sudo mount -o loop ubuntu-image.img img_mnt
+	d) sudo debootstrap --arch amd64 disco img_mnt
+	e) sudo umount img_mnt
+
+
+5) Qemu Network backend configuration:
+   ==================================
+	a) SLiRP:
+       -----
+		Nothing to be setup. Ping does not work. To test simply scp a file from
+		guest to host. (Setup certificates if necessary)
+
+	b) TUN/TAP:
+	   -------
+
+
+6) Ubuntu RFS creation:
+   ===================
+	a) Do a debootrap to get Ubuntu RFS
+	b) During boot in Qemu the "sda" device will be mounted as read only. Modify
+	   fstab to make it read-write
