@@ -93,3 +93,8 @@ bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_linux/lin
 	a) Do a debootrap to get Ubuntu RFS
 	b) During boot in Qemu the "sda" device will be mounted as read only. Modify
 	   fstab to make it read-write
+
+7) Networking experiments:
+   ======================
+	a) TUN/TAP testing by setting the link to 172.0.0.1 i.e. non local ip address.
+	b)
