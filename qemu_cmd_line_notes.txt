@@ -97,4 +97,5 @@ bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_linux/lin
 7) Networking experiments:
    ======================
 	a) TUN/TAP testing by setting the link to 172.0.0.1 i.e. non local ip address.
-	b)
+	b) Bring up the tun0 interface once the tun0 interface is setup by the code.
+	c) Assign IP address to it.
