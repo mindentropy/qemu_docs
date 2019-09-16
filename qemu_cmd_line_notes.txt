@@ -1,18 +1,24 @@
 1) Qemu startup:
    ------------
-bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -initrd ../../build/initramfs-busybox-x86.cpio.gz -kernel ../../mainline_kernel/arch/x86_64/boot/bzImage -nographic -append "console=ttyS0" -enable-kvm -L pc-bios
+1) bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -initrd ../../build/initramfs-busybox-x86.cpio.gz -kernel ../../mainline_kernel/arch/x86_64/boot/bzImage -nographic -append "console=ttyS0" -enable-kvm -L pc-bios
 
-bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_linux/linux/arch/x86_64/boot/bzImage -initrd ../busybox/build/initramfs_busybox.cpio.gz -nographic -append "console=ttyS0 ip=dhcp" -L pc-bios -enable-kvm -m 1G -smp 2 -device e1000,netdev=user.0 -netdev user,id=user.0
+2) bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_linux/linux/arch/x86_64/boot/bzImage -initrd ../busybox/build/initramfs_busybox.cpio.gz -nographic -append "console=ttyS0 ip=dhcp" -L pc-bios -enable-kvm -m 1G -smp 2 -device e1000,netdev=user.0 -netdev user,id=user.0
 
-bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_linux/linux/arch/x86_64/boot/bzImage -hda ../ubuntu_img/ubuntu_rfs.img  -nographic -append "console=ttyS0 ip=dhcp root=/dev/sda" -L pc-bios -enable-kvm -m 1G -smp 2 -device e1000,netdev=user.0 -netdev user,id=user.0
+3) bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_linux/linux/arch/x86_64/boot/bzImage -hda ../ubuntu_img/ubuntu_rfs.img  -nographic -append "console=ttyS0 ip=dhcp root=/dev/sda" -L pc-bios -enable-kvm -m 1G -smp 2 -device e1000,netdev=user.0 -netdev user,id=user.0
 
-sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_linux/linux/arch/x86_64/boot/bzImage -hda ../rootfs_img/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 ip=dhcp root=/dev/sda" -L pc-bios -enable-kvm -m 1G -smp 2 -device e1000,netdev=net0 -netdev tap,id=net0
+4) sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_linux/linux/arch/x86_64/boot/bzImage -hda ../rootfs_img/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 ip=dhcp root=/dev/sda" -L pc-bios -enable-kvm -m 1G -smp 2 -device e1000,netdev=net0 -netdev tap,id=net0
 
-QEMU /dev/net/tun Operation not permitted. Run with script=no,downscript=no
+5) QEMU /dev/net/tun Operation not permitted. Run with script=no,downscript=no
 sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_linux/linux/arch/x86_64/boot/bzImage -hda ../rootfs_img/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 root=/dev/sda" -L pc-bios -enable-kvm -m 1G -smp 2 -device e1000,netdev=net0 -netdev tap,id=net0,script=no,downscript=no
 
-QEMU /dev/net/tun Operation not permitted. It can also be fixed with -runas
+6) QEMU /dev/net/tun Operation not permitted. It can also be fixed with -runas
 sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_linux/linux/arch/x86_64/boot/bzImage -hda ../rootfs_img/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 root=/dev/sda" -L pc-bios -enable-kvm -m 1G -smp 2 -device e1000,netdev=net0 -netdev tap,id=net0 -runas `whoami`
+
+7) QEMU with Vhost:
+sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_kernel/arch/x86_64/boot/bzImage -hda ../rfs_images/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 root=/dev/sda" -L pc-bios -enable-kvm -m 1G -smp 2 -device virtio-net-pci,netdev=net0 -netdev tap,id=net0,vhost=on,script=no,downscript=no -runas `whoami`
+
+8) QEMU with Vhost and IRQ remapping and IOMMU:
+sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -M q35,kernel-irqchip=split -device intel-iommu,intremap=on -kernel ../mainline_kernel/arch/x86_64/boot/bzImage -hda ../rfs_images/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 root=/dev/sda" -L pc-bios -enable-kvm -m 1G -smp 2 -device virtio-net-pci,netdev=net0 -netdev tap,id=net0,vhost=on,script=no,downscript=no -runas `whoami`
 
 2) Busybox build:
    -------------
@@ -100,7 +106,7 @@ sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_linu
 	   3) Create a tun0 interface. Add this interface to the bridge.
 	   4) Setup the bridge to get address via DHCP
 
-	   It can be done via UI because the Network Manager keeps iterfereing
+	   It can be done via UI because the Network Manager keeps iterfering
 
 	   Via command line:
 	   a) sudo ip link set enp7s0 down
@@ -116,6 +122,16 @@ sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_linu
 			bridge0         8000.52c373a8e1c2       yes             enp7s0
 																	tap0
 			xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+	   i) Network Manager is known to interfere with brctl. Following can be done
+			to setup using NetworkManager via nmcli:
+			1) nmcli conn add ifname br0 type bridge con-name br0
+			2) nmcli conn modify br0 bridge.stp no
+			3) nmcli con edit br0
+			4) In the command line do -> set ipv4.dns 8.8.8.8,8.8.4.4 (Save and exit)
+			5) nmcli conn add type bridge-slave ifname eth0 master br0
+			6) Restart the NetworkManager -> sudo systemctl restart NetworkManager
+			7) Add the tun/tap interface as above
+			8) Add the tap0 interface as in (5)
 
 6) Ubuntu RFS creation:
    ===================
