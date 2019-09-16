@@ -6,19 +6,22 @@
 
 3) bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_linux/linux/arch/x86_64/boot/bzImage -hda ../ubuntu_img/ubuntu_rfs.img  -nographic -append "console=ttyS0 ip=dhcp root=/dev/sda" -L pc-bios -enable-kvm -m 1G -smp 2 -device e1000,netdev=user.0 -netdev user,id=user.0
 
-4) sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_linux/linux/arch/x86_64/boot/bzImage -hda ../rootfs_img/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 ip=dhcp root=/dev/sda" -L pc-bios -enable-kvm -m 1G -smp 2 -device e1000,netdev=net0 -netdev tap,id=net0
+4) sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_linux/linux/arch/x86_64/boot/bzImage -hda ../rootfs_img/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 ip=dhcp root=/dev/sda" -L pc-bios -enable-kvm -m 1G -smp 2 -device e1000,netdev=net0 -netdev tap,id=net0,ifname=tap0
 
 5) QEMU /dev/net/tun Operation not permitted. Run with script=no,downscript=no
-sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_linux/linux/arch/x86_64/boot/bzImage -hda ../rootfs_img/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 root=/dev/sda" -L pc-bios -enable-kvm -m 1G -smp 2 -device e1000,netdev=net0 -netdev tap,id=net0,script=no,downscript=no
+sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_linux/linux/arch/x86_64/boot/bzImage -hda ../rootfs_img/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 root=/dev/sda" -L pc-bios -enable-kvm -m 1G -smp 2 -device e1000,netdev=net0 -netdev tap,id=net0,script=no,downscript=no,ifname=tap0
 
 6) QEMU /dev/net/tun Operation not permitted. It can also be fixed with -runas
-sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_linux/linux/arch/x86_64/boot/bzImage -hda ../rootfs_img/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 root=/dev/sda" -L pc-bios -enable-kvm -m 1G -smp 2 -device e1000,netdev=net0 -netdev tap,id=net0 -runas `whoami`
+sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_linux/linux/arch/x86_64/boot/bzImage -hda ../rootfs_img/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 root=/dev/sda" -L pc-bios -enable-kvm -m 1G -smp 2 -device e1000,netdev=net0 -netdev tap,id=net0,ifname=tap0 -runas `whoami`
 
 7) QEMU with Vhost:
-sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_kernel/arch/x86_64/boot/bzImage -hda ../rfs_images/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 root=/dev/sda" -L pc-bios -enable-kvm -m 1G -smp 2 -device virtio-net-pci,netdev=net0 -netdev tap,id=net0,vhost=on,script=no,downscript=no -runas `whoami`
+sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_kernel/arch/x86_64/boot/bzImage -hda ../rfs_images/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 root=/dev/sda" -L pc-bios -enable-kvm -m 1G -smp 2 -device virtio-net-pci,netdev=net0 -netdev tap,id=net0,vhost=on,script=no,downscript=no,ifname=tap0 -runas `whoami`
 
 8) QEMU with Vhost and IRQ remapping and IOMMU:
-sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -M q35,kernel-irqchip=split -device intel-iommu,intremap=on -kernel ../mainline_kernel/arch/x86_64/boot/bzImage -hda ../rfs_images/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 root=/dev/sda" -L pc-bios -enable-kvm -m 1G -smp 2 -device virtio-net-pci,netdev=net0 -netdev tap,id=net0,vhost=on,script=no,downscript=no -runas `whoami`
+sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -M q35,kernel-irqchip=split -device intel-iommu,intremap=on -kernel ../mainline_kernel/arch/x86_64/boot/bzImage -hda ../rfs_images/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 root=/dev/sda" -L pc-bios -enable-kvm -m 1G -smp 2 -device virtio-net-pci,netdev=net0 -netdev tap,id=net0,vhost=on,ifname=tap0,script=no,downscript=no -runas `whoami`
+
+** In Qemu bring up the ethernet interface. Check for tap0 to come up in the dmesg logs in the host
+** It takes time for tap interface to come up. After this do a dhclient -i enp0s*
 
 2) Busybox build:
    -------------
