@@ -134,7 +134,10 @@ sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -M q35,kernel-irqchip=sp
 			5) nmcli conn add type bridge-slave ifname eth0 master br0
 			6) Restart the NetworkManager -> sudo systemctl restart NetworkManager
 			7) Add the tun/tap interface as above
-			8) Add the tap0 interface as in (5)
+			8) ****Add the tap0 interface as in (5)****
+			9) Adding tap0 interface to the bridge is useless using nmcli. Use the following to
+			   add the tap interface to the bridge:
+			   -> sudo ip link set tap0 master bridge0
 
 6) Ubuntu RFS creation:
    ===================
