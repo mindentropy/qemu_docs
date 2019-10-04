@@ -150,3 +150,13 @@ sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -M q35,kernel-irqchip=sp
 	a) TUN/TAP testing by setting the link to 172.0.0.1 i.e. non local ip address.
 	b) Bring up the tun0 interface once the tun0 interface is setup by the code.
 	c) Assign IP address to it.
+
+8) Debugging kernel with Qemu and GDB:
+   ==================================
+	a) Disable KASLR (Kernel Address Space Layout Randomization). Can be done by passing
+       "nokaslr" in the kernel options or by disabling CONFIG_RANDOMIZE_BASE in the
+	   kernel menuconfig.
+
+       ********************************** Note *****************************************
+	   If the above is not disabled Qemu will not hit any breakpoints set by remote GDB.
+	   *********************************************************************************
