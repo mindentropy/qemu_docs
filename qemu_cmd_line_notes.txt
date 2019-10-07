@@ -160,3 +160,4 @@ sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -M q35,kernel-irqchip=sp
        ********************************** Note *****************************************
 	   If the above is not disabled Qemu will not hit any breakpoints set by remote GDB.
 	   *********************************************************************************
+	b) Use hbreak (hardware breakpoint) to set atleast the first breakpoint.
