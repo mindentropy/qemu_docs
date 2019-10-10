@@ -20,6 +20,10 @@ sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -kernel ../mainline_kern
 8) QEMU with Vhost and IRQ remapping and IOMMU:
 sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -M q35,kernel-irqchip=split -device intel-iommu,intremap=on -kernel ../mainline_kernel/arch/x86_64/boot/bzImage -hda ../rfs_images/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 root=/dev/sda" -L pc-bios -enable-kvm -m 1G -smp 2 -device virtio-net-pci,netdev=net0 -netdev tap,id=net0,vhost=on,ifname=tap0,script=no,downscript=no -runas `whoami`
 
+9) Selection of tmp105 I2C
+sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -M q35,kernel-irqchip=split -device intel-iommu,intremap=on -kernel ../mainline_kernel/arch/x86_64/boot/bzImage -hda ../rfs_images/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 root=/dev/sda nokaslr" -L pc-bios -enable-kvm -m 1G -smp 2 -netdev type=tap,id=net0,ifname=tap0,vhost=on,script=no,downscript=no -runas `whoami` -device virtio-net-pci,netdev=net0 -device tmp105,id=sensor,address=0x49
+
+
 ** In Qemu bring up the ethernet interface. Check for tap0 to come up in the dmesg logs in the host
 ** It takes time for tap interface to come up. After this do a dhclient -i enp0s*
 
