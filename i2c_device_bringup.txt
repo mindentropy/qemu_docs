@@ -1,0 +1,37 @@
+This document explains bringing up enabling TMP105 and TMP421 I2C device support
+in Qemu.
+
+Steps:
+=====
+
+1) Enable TMP105(Bus addr 0x49) and TMP421(Bus addr 0x19) in Qemu by writing
+   -> Select TMP105 and TMP421 in Kconfig present in qemu/hw/i386 in the config Q35 CPU
+		section
+2) Enable User space I2C support, HWMON, LM25 for TMP105 and TMP421 drivers in the kernel
+3) Install sensors package in the RFS or build for Ubuntu etc
+4) To instantiate a device do the following:
+	sudo bash -c "echo tmp421 0x1c > new_device" where new_device file is present in
+	/sys/bus/i2c/device
+5) To delete the device do the following:
+	sudo bash -c "echo 0x1c > delete_device" where delete_device is present in
+	/sys/bus/i2c/device
+6) To startup with the following devices attached to I2C bus give the following command: 
+	sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -M q35,kernel-irqchip=split -device intel-iommu,intremap=on -kernel ../mainline_kernel/arch/x86_64/boot/bzImage -hda ../rfs_images/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 root=/dev/sda nokaslr" -L pc-bios -enable-kvm -m 1G -smp 2 -device virtio-net-pci,netdev=net0 -netdev tap,id=net0,vhost=on,ifname=tap0,script=no,downscript=no -runas `whoami` -device tmp105,id=sensor,address=0x49 -device tmp421,id=sensor1,address=0x1c
+7) Run command --> sensors to verify the list of SMBUS sensors. Following is the sample output:
+		
+		tmp105-i2c-0-49
+		Adapter: SMBus I801 adapter at 0700
+		temp1:         +0.0°C  (high =  +0.0°C, hyst =  +0.0°C)
+		
+		tmp421-i2c-0-1c
+		Adapter: SMBus I801 adapter at 0700
+		temp1:         +0.0°C  
+		temp2:         +0.0°C
+8) Before enabling and trying out things make sure you have the following options enabled
+   in the kernel:
+
+	a) CONFIG_I2C_I801
+	b) CONFIG_I2C_ISCH
+	c) CONFIG_I2C_ISMT
+	d) CONFIG_SENSORS_TMP421 (TMP421)
+	e) CONFIG_SENSORS_LM25 (TMP105)
