@@ -35,3 +35,26 @@ Steps:
 	c) CONFIG_I2C_ISMT
 	d) CONFIG_SENSORS_TMP421 (TMP421)
 	e) CONFIG_SENSORS_LM25 (TMP105)
+
+9) Enable Tracing:
+   ==============
+	a) Add event in a events file with each even per line. In case of i2c the events are
+		present in hw/i2c/trace-events
+      For eg you can add a trace event i2c_event in the events file
+    b) During startup add a --trace = <dir>/events file
+    c) You can also add events in the Qemu monitor. Do a -> trace-event i2c_* on to enable
+       wildcard i2c events
+    d) In another command line to view the trace events do a
+       $ bin/debug/native/scripts/simpletrace.py bin/debug/native/trace-events-all \
+			 trace-<qemu_pid> | grep i2c
+	e) Do some simple I2C transactions like i2cdetect or instantiate a device like above
+	   and run sensors command to generate i2c events
+    f) You will not be able to see i2c events in the file if you do not flush the
+       trace-events file. To do this do -> $ trace-file flush
+	   which will flush the events to the file. (Wasted a lot of time as the trace file
+	   was empty)
+
+	Trace build setup:
+    =================
+	a) To enable trace in the build use the following:
+		$ ./../../configure --enable-debug --enable-trace-backends=simple
