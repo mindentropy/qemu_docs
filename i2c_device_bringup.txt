@@ -58,3 +58,21 @@ Steps:
     =================
 	a) To enable trace in the build use the following:
 		$ ./../../configure --enable-debug --enable-trace-backends=simple
+
+
+I2C Passthrough Discussion:
+==========================
+stefanha> nascentmind: I'm also not sure you can get really low-level I2C access because the register interfaces on physical I2C controllers are not necessarily that low-level.  They may be at the transaction level.
+<stefanha> nascentmind: So only some physical I2C controllers could be used in such a low-level mode.
+stefanha> nascentmind: I think the most effective way to do I2C passthrough with QEMU today is to take either the patch you linked or the one I linked,
+<stefanha> and then check if your target machine type has an I2C controller,
+<stefanha> and then you may need to write a few lines of code to put the I2C passthrough device onto that emulated I2C controller.
+<stefanha> At that point the guest should have basic I2C to a physical I2C device on the host.
+<stefanha> If your machine type doesn't have an I2C controller and no existing I2C controller in QEMU can be plugged in, then either implementing a physical I2C controller native to that machine type or going the VIRTIO route would make sense.
+
+Patch 1: [PATCH v3] chardev/char-i2c: Implement Linux I2C character device
+
+
+<f4bug> nascentmind: I posted SD card tests in python 2 years ago, I believe the way they work would ease your i2c device development/testing
+<f4bug> nascentmind: basically I exposed the SD bus over QMP so I could directly test the SD bus and the SD device without having a hardware implementation interfering with my goal
+<f4bug> nascentmind: see https://lists.gnu.org/archive/html/qemu-devel/2017-12/msg02349.html (QMP) and https://lists.gnu.org/archive/html/qemu-devel/2017-12/msg02350.html (Python tests)
