@@ -1,0 +1,84 @@
+Board Porting:
+--------------
+
+IRC logs:
+net (Fri Dec 13 16:12:56 2019)
+<nascentmind> stefanha, Hi. I understood how to write a simple i2c device. Now I want to start off with doing something ambitious. I am interested in emulating a board like beaglebone. Do you have any advise on how to start off?
+<stefanha> nascentmind: There was an email thread about adding beaglebone support here: https://lore.kernel.org/qemu-devel/CAPan3Wq=ru496SOb93YA6ytTJJbSFtTuXC_B-MPETC5_ipdE6A@mail.gmail.com/T/
+* mcondotta has quit (Quit: No Ping reply in 180 seconds.)
+<stefanha> nascentmind: f4bug and pm215 might be able to share some more ideas on how to get started.
+<stefanha> nascentmind: In general, the process of adding a new board to QEMU is:
+<stefanha> 1. Check the hardware specs of the board to see if the CPU and devices are already emulated by QEMU.
+<stefanha> 2. Add missing CPU functionality to TCG (if necessary)
+* mcondotta (~quassel@177.126.10.88) has joined
+<stefanha> 3. Create a new board in hw/$ARCH/ - take a look at recently added boards for examples of how to do this.
+<stefanha> 4. Implement missing devices and add them to the board
+<stefanha> (look at existing devices for examples of how to implement timers, serial ports, network cards, etc)
+<pm215> for the beaglebone in particular, you should definitely start with the currently-out-of-tree omap3/beagleboard support mentioned in the qemu-devel thread stefanha linked to
+<stefanha> nascentmind: Hope this helps.  The amount of work can vary from very little (just adding a new board definition when the CPU and devices are already written to a lot of work)
+* Wryhder (~Wryhder@197.210.226.81) has joined
+<pm215> in this case this is going to be a lot of work
+<nascentmind> pm215, I have picked beaglebone precisely for that because there is a out of tree support that I can reference.
+* Lucas_Gray has quit (Remote host closed the connection)
+* Wryhder is now known as Lucas_Gray
+<pm215> adding beaglebone to the out-of-tree code is probably easy; getting that out-of-tree code to actually upstreamable is hard
+<nascentmind> pm215, I am not looking at upstreamable code right now. Just learning the internals and being familiar and comfortable with it.
+<pm215> the reason it's not upstream is because five years ago I deided that it would be a couple of months' work to get it into shape and upstream, and I couldn't justify that much effort on it. now you have that much work plus more to just rebase it onto a current master after 5 years of changes...
+<pm215> nascentmind: that tree is a terrible source for learning about internals, because it's 5 years old
+<pm215> and all the non-upstreamable parts are "because it's written in an obsolete way" which you don't want to be using as a reference for how to write QEMU code
+<nascentmind> pm215, What would you suggest I start for learning. I am only familiar with ARM based boards and x86.
+<nascentmind> pm215, I am also familiar with MSP430 and the STM32F port looks interesting.
+<pm215> I tend to recommend doing something where you care about whatever feature it is you're implementing (ie you need it for some purpose)
+<nascentmind> Currently I am looking at learning to port a board as I want to have a platform for kernel and application developers to develop before the board arrives.
+<pm215> rough rule of thumb for new board support: it's about as much work as porting the linux kernel to run on the board
+<pm215> hopefully you have h/w for your board and good documentation
+* lagarcia (~lagarcia@32.104.18.243) has joined
+* lagarcia has quit (Remote host closed the connection)
+<nascentmind> Yes I do have that.
+* lpetrut_ has quit (Quit: Leaving)
+* lpetrut (~Lucian@136.255.144.102) has joined
+* crazysane (~crazysane@static-96-253-78-106.rcmdva.fios.verizon.net) has joined
+<pm215> if you're looking for warmup tasks for starting a board port, you could (a) look at some existing board that you know that we already model and add missing devices and/or (b) look at an existing board model that's using obsolete coding style and bring it into line with the new way of doing things
+* lagarcia (~lagarcia@32.104.18.243) has joined
+* laine (~laine@2600:8805:3a00:bab:dc26:a28a:6c63:1827) has joined
+* laine has quit (Remote host closed the connection)
+* laine (~laine@2600:8805:3a00:bab:dc26:a28a:6c63:1827) has joined
+* LeoB (~LeoBras@0002008c.user.oftc.net) has joined
+<f4bug> nascentmind: there is a series adding the Orange Pi board (based on Allwinner H3), this is a very clean example to add a board: https://www.mail-archive.com/qemu-devel@nongnu.org/msg680445.html
+* wainersm (~wainersm@179.105.213.125) has joined
+* ahmedkrmn_ (~ahmedkrmn@102.186.75.216) has joined
+* gargus has quit (Ping timeout: 480 seconds)
+* bzlotnik (~bzlotnik@bzq-82-81-161-50.red.bezeqint.net) has joined
+<f4bug> nascentmind: another very clean series but shorter is the Xilinx Versal SoC: https://www.mail-archive.com/qemu-devel@nongnu.org/msg568787.html
+<f4bug> both series assume public datasheets available
+<nascentmind> f4bug, I was seeing Xilinux ZynqMP by Edgar Iglesias on youtube.
+<f4bug> if you want to reverse engineer some hardware, then the approach is different (I don't know good examples) and your board is not likely to get merged upstream 
+* ahmedkrmn has quit (Ping timeout: 480 seconds)
+* ahmedkrmn_ is now known as ahmedkrmn
+<nascentmind> f4bug, The board design would have a TI AM335x or i.mx6 or 7.
+<f4bug> QEMU i.MX model is in good shape
+<f4bug> TI code isn't...
+<nascentmind> f4bug, How hard is microcontroller porting. I am very familiar with MSP430 and it is a very simple microcontroller with just 27 instructions.
+<f4bug> QEMU separates the ARchitecture (i.e. target/arm/ directory) from the Hardware devices (hw/arm/ or hw/timer/ ...)
+<f4bug> luckily for you if you choose the ARM architecture, it is very well modelled, so you probably won't need to worry about the instructions. it most likely work "out of the box"
+* ahmedkrmn has quit (Remote host closed the connection)
+<f4bug> you simply have to instantiate a ARM core and it will run your code
+<pm215> nascentmind: if you pick something which is a target architecture we don't already support then you're adding a big pile of "first write qemu guest architecture support for a new architecture" to your to do list. I would advise aganist it.
+* ahmedkrmn (~ahmedkrmn@102.186.75.216) has joined
+* Coiby1 has quit (Quit: Leaving.)
+<nascentmind> pm215, ok. I thought so and want to avoid just that. I want start off with board support with a supported architecture.
+<kashyap> pm215: Hi, just re-connected to OFTC to coordinate on that.  Your plans sounds good
+<kashyap> pm215: I.e. please go ahead with your proposed plan of taking Paolo's changes and rolling a v2.  Thanks!
+* cohuck_away is now known as cohuck
+<kashyap> (I offerred a v5 only to not make it more cumbersome for you :-))
+* ahmedkrmn has quit (Quit: Going offline, see ya! (www.adiirc.com))
+* LeoB has quit (Read error: No route to host)
+<pm215> kashyap: I think this is just something where having one person make the various minor fixups is going to be easier than coordinating several people doing it and reposting versions of things
+* lvivier has quit (Quit: Bye!)
+* lvivier (~lvivier@2a01:e34:eeee:5240:a6df:d3d5:d584:efd6) has joined
+<kashyap> Yeah, guessed as much.  Thank you.
+<f4bug> I haven't followed the documentation cleanup effort closely, does this patch need rewrite to different format? https://www.mail-archive.com/qemu-devel@nongnu.org/msg682310.html
+<pm215> f4bug: yeah, it will. probably best to just not worry about it until the docs stuff has landed
+* Jumbef[mobile] (~Jumbef@i16-lef02-th2-89-83-167-245.ft.lns.abo.bbox.fr) has joined
+* ahmedkrmn (~ahmedkrmn@102.186.75.216) has joined
+<nascentmind> f4bug, Where does the clock tree emulation for ARM come in Qemu?

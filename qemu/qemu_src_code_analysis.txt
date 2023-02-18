@@ -1,0 +1,207 @@
+Code Analysis
+=============
+
+To analyze the source we need to find the backtrace of running application. 
+
+Qemu spawns multiple threads on execution. I will be stuck on a particular thread
+that halts. To enable backtrace on all threads we do the following:
+
+(gdb) thread apply all bt
+
+Now when we do a backtrace (bt) we get the following output:
+
+----------------------------------------------------TRACE STARTS------------------------------------------------------
+
+Thread 6 (Thread 0x7fff637fe6c0 (LWP 17347) "gdbus"):
+#0  0x00007ffff511112f in __GI___poll (fds=0x5555560fb000, nfds=2, timeout=-1) at ../sysdeps/unix/sysv/linux/poll.c:29
+#1  0x00007ffff6f3119e in  () at /lib/x86_64-linux-gnu/libglib-2.0.so.0
+#2  0x00007ffff6edba7f in g_main_loop_run () at /lib/x86_64-linux-gnu/libglib-2.0.so.0
+#3  0x00007ffff713534a in  () at /lib/x86_64-linux-gnu/libgio-2.0.so.0
+#4  0x00007ffff6f0b371 in  () at /lib/x86_64-linux-gnu/libglib-2.0.so.0
+#5  0x00007ffff5090402 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:442
+#6  0x00007ffff511f590 in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:81
+
+Thread 5 (Thread 0x7fff63fff6c0 (LWP 17346) "gmain"):
+#0  0x00007ffff511112f in __GI___poll (fds=0x5555560e91d0, nfds=2, timeout=-1) at ../sysdeps/unix/sysv/linux/poll.c:29
+#1  0x00007ffff6f3119e in  () at /lib/x86_64-linux-gnu/libglib-2.0.so.0
+#2  0x00007ffff6ed9cb0 in g_main_context_iteration () at /lib/x86_64-linux-gnu/libglib-2.0.so.0
+#3  0x00007ffff6ed9d01 in  () at /lib/x86_64-linux-gnu/libglib-2.0.so.0
+#4  0x00007ffff6f0b371 in  () at /lib/x86_64-linux-gnu/libglib-2.0.so.0
+#5  0x00007ffff5090402 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:442
+#6  0x00007ffff511f590 in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:81
+
+Thread 4 (Thread 0x7ffff130b6c0 (LWP 17345) "qemu-system-msp"):
+#0  __pthread_kill_implementation (no_tid=0, signo=6, threadid=<optimized out>) at ./nptl/pthread_kill.c:44
+#1  __pthread_kill_internal (signo=6, threadid=<optimized out>) at ./nptl/pthread_kill.c:78
+#2  __GI___pthread_kill (threadid=<optimized out>, signo=signo@entry=6) at ./nptl/pthread_kill.c:89
+#3  0x00007ffff503bc46 in __GI_raise (sig=sig@entry=6) at ../sysdeps/posix/raise.c:26
+#4  0x00007ffff50227fc in __GI_abort () at ./stdlib/abort.c:79
+#5  0x00007ffff502271b in __assert_fail_base (fmt=0x7ffff51bac30 "%s%s%s:%u: %s%sAssertion `%s' failed.\n%n", assertion=0x555555b42ff5 "icount_enabled()", file=0x555555b42e98 "../../../accel/tcg/cpu-exec.c", line=832, function=<optimized out>) at ./assert/assert.c:92
+#6  0x00007ffff5033596 in __GI___assert_fail (assertion=0x555555b42ff5 "icount_enabled()", file=0x555555b42e98 "../../../accel/tcg/cpu-exec.c", line=832, function=0x555555b43170 <__PRETTY_FUNCTION__.1> "cpu_loop_exec_tb") at ./assert/assert.c:101
+#7  0x000055555586a024 in cpu_loop_exec_tb (cpu=0x555555f7adb0, tb=0x7fffa4000040, last_tb=0x7ffff1307140, tb_exit=0x7ffff130712c) at ../../../accel/tcg/cpu-exec.c:832
+#8  0x000055555586a37d in cpu_exec (cpu=0x555555f7adb0) at ../../../accel/tcg/cpu-exec.c:970
+#9  0x000055555588b1b0 in tcg_cpus_exec (cpu=0x555555f7adb0) at ../../../accel/tcg/tcg-accel-ops.c:67
+#10 0x000055555588c0e6 in rr_cpu_thread_fn (arg=0x555555f7adb0) at ../../../accel/tcg/tcg-accel-ops-rr.c:216
+#11 0x0000555555a61503 in qemu_thread_start (args=0x555555ef0f60) at ../../../util/qemu-thread-posix.c:541
+#12 0x00007ffff5090402 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:442
+#13 0x00007ffff511f590 in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:81
+
+Thread 3 (Thread 0x7ffff1cee6c0 (LWP 17344) "trace-thread"):
+#0  syscall () at ../sysdeps/unix/sysv/linux/x86_64/syscall.S:38
+#1  0x00007ffff6f2aee3 in g_cond_wait () at /lib/x86_64-linux-gnu/libglib-2.0.so.0
+#2  0x0000555555a91b20 in wait_for_trace_records_available () at ../../../trace/simple.c:151
+#3  0x0000555555a91b88 in writeout_thread (opaque=0x0) at ../../../trace/simple.c:170
+#4  0x00007ffff6f0b371 in  () at /lib/x86_64-linux-gnu/libglib-2.0.so.0
+#5  0x00007ffff5090402 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:442
+#6  0x00007ffff511f590 in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:81
+
+Thread 2 (Thread 0x7ffff25f06c0 (LWP 17343) "qemu-system-msp"):
+#0  syscall () at ../sysdeps/unix/sysv/linux/x86_64/syscall.S:38
+#1  0x0000555555a6113d in qemu_futex_wait (f=0x555555d42458 <rcu_call_ready_event>, val=4294967295) at /home/mindentropy/kernel_work/qemu/include/qemu/futex.h:29
+#2  0x0000555555a6133c in qemu_event_wait (ev=0x555555d42458 <rcu_call_ready_event>) at ../../../util/qemu-thread-posix.c:480
+#3  0x0000555555a6c3cf in call_rcu_thread (opaque=0x0) at ../../../util/rcu.c:258
+#4  0x0000555555a61503 in qemu_thread_start (args=0x555555de2370) at ../../../util/qemu-thread-posix.c:541
+#5  0x00007ffff5090402 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:442
+#6  0x00007ffff511f590 in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:81
+
+Thread 1 (Thread 0x7ffff2854340 (LWP 17340) "qemu-system-msp"):
+#0  0x00007ffff5111226 in __ppoll (fds=0x555556170d90, nfds=6, timeout=<optimized out>, sigmask=0x0) at ../sysdeps/unix/sysv/linux/ppoll.c:42
+#1  0x0000555555a8aa1f in qemu_poll_ns (fds=0x555556170d90, nfds=6, timeout=7884903) at ../../../util/qemu-timer.c:348
+#2  0x0000555555a85b48 in os_host_main_loop_wait (timeout=7884903) at ../../../util/main-loop.c:250
+#3  0x0000555555a85c83 in main_loop_wait (nonblocking=0) at ../../../util/main-loop.c:531
+#4  0x00005555557e7a30 in qemu_main_loop () at ../../../softmmu/runstate.c:726
+#5  0x00005555556f44aa in main (argc=7, argv=0x7fffffffda88, envp=0x7fffffffdac8) at ../../../softmmu/main.c:50
+
+----------------------------------------------------TRACE ENDS------------------------------------------------------
+
+If we see the trace in Thread 1 we see that the first thread starts from softmmu/main.c, main(..) function. 
+
+From here we start with main() -> qemu_main_loop() -> main_loop_wait() -> os_host_main_loop_wait()
+
+Next is how Thread 4 gets spawned? This is the main TCG loop.
+
+05-02-2023
+----------
+1. cpu_exec(...) calls cpu_loop_exec_tb(...) tb -> translation block
+2. Does cpu_exec(...) have functions which translate a block of code?
+3. Can we dump the code which was read to be translated?
+	a. We see tb_lookup(...) which needs to be investigate further to see
+		whether this code will actually do the translation or even lookup the
+		code block.
+	b. Before this we also see cpu_get_tb_cpu_state(...). This needs to be
+		explored
+
+Monday 06 February 2023 09:36:17 AM IST
+---------------------------------------
+1. Trace entire cpu_exec(...) function because it looks more interesting with
+   regards to translation.
+   	a. Keep a break point in cpu_get_tb_cpu_state called function. In our case
+		it would be cpu_get_tb_cpu_state(...). So the step should in should land
+		into our function
+		Result: The function steps into cpu_get_tb_state of the particular 
+		emulated processor i.e. MSP430's function.
+	b. After stepping forward, there is tb_lookup which returns NULL
+	c. Since tb is NULL, tb_gen_code(...) gets called.
+	d. cpu_loop_exec_tb(...) causes the exception
+
+Observation:
+-----------
+After execution of tb_gen_code(...), the path it takes is my user code. There is some disassembly happening based on my function.
+1. Step into tb_gen_code(...) to see what are the operations visible
+
+
+Wednesday 08 February 2023 08:26:58 AM IST
+------------------------------------------
+Call trace:
+
+	cpu_exec(...)
+			|
+			V
+	tb_gen_code(...)
+			|
+			V
+	gen_intermediate_code(...) (CPU specific code)
+			|
+			V
+	translator_loop(...)
+			|
+			V
+	init_disas_context (CPU specific code)
+			|
+			V
+	gen_tb_start(...) (QEMU code) 
+			|
+			V
+	tb_start (ops->tb_start) (CPU specific code) -> msp430_tr_tb_start(...) #Start of translation
+			|
+			V
+	plugin_gen_tb_start (QEMU code)
+			|
+			V
+	ops->insn_start (CPU specific code) -> msp430_tr_insn_start(...) 
+			|
+			V
+	gen_io_start(...) (QEMU code)
+			|
+			V
+	translate_insn(...) (CPU Specific code) -> msp430_tr_translate_insn(...)
+			|
+			V
+	tb_stop (ops->tb_stop) (CPU specific code) -> msp430_tr_tb_stop(...) #Emit code to exit the TB
+			|
+			V
+	gen_tb_end(...) (QEMU code) (translate-all.c)
+			|
+			V
+	tcg_gen_code(...) (QEMU code) (translate-all.c)
+			|
+			V
+	Exits function at translate-all.c:1647 (QEMU Code) inside tb_gen_code(...)
+
+
+Saturday 11 February 2023 11:09:42 AM IST
+-----------------------------------------
+
+1. The thread gets killed because of a failed assertion. It happens at cpu-exec.c:832 in cpu_loop_exec_tb(...).
+
+Failure:
+-------
+----------------------------- Log --------------------------------------------------
+970                 cpu_loop_exec_tb(cpu, tb, &last_tb, &tb_exit);
+(gdb) n
+qemu-system-msp430: ../../../accel/tcg/cpu-exec.c:832: cpu_loop_exec_tb: Assertion `icount_enabled()' failed.
+
+Thread 4 "qemu-system-msp" received signal SIGABRT, Aborted.
+__pthread_kill_implementation (no_tid=0, signo=6, threadid=<optimized out>) at ./nptl/pthread_kill.c:44
+44      ./nptl/pthread_kill.c: No such file or directory.
+------------------------------------------------------------------------------------
+
+Task 1: Find out how to read qemu_log?
+Ans: util/log.c has the different logging options. The logging options are setup using
+	 -d option. Currently I use -d in_asm,out_asm which logs target assembly code for 
+	 each compiled TB and generated host assembly code for each compiled TB respectively.
+
+	 Without any logging output option it prints out to the stderr console. Else we can 
+	 use the -D option to print to a file.
+
+
+Friday 18 February 2023 08:37:12 AM IST
+---------------------------------------
+Task 1: Try to add log data in some functions using qemu_log(...)?
+
+
+GDB grind
+---------
+1. Identify the function that provides the prologue and epilogue for a TB.
+	a. What exactly does the prologue do?
+		1. Identify what the disassembly does?
+	b. What exactly does the epilogue do?
+		1. Identify what the disassembly does?
+ 
+Anatomy of call loops
+---------------------
+
+1. cpu_exec(...) is the loop that keeps the translation going.
+2. translator_loop(...) does not actually have a loop. It calls the standard
+   gen_tb_start(...) and gen_tb_end(...) which in turn calls the tb_start(...) and
+   tb_end(...)

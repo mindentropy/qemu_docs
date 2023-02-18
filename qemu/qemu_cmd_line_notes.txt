@@ -23,8 +23,26 @@ sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -M q35,kernel-irqchip=sp
 9) Selection of tmp105 I2C
 sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -M q35,kernel-irqchip=split -device intel-iommu,intremap=on -kernel ../mainline_kernel/arch/x86_64/boot/bzImage -hda ../rfs_images/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 root=/dev/sda nokaslr" -L pc-bios -enable-kvm -m 1G -smp 2 -netdev type=tap,id=net0,ifname=tap0,vhost=on,script=no,downscript=no -runas `whoami` -device virtio-net-pci,netdev=net0 -device tmp105,id=sensor,address=0x49
 
+10) Better command line options for Selection of tmp105 I2C
 
-** In Qemu bring up the ethernet interface. Check for tap0 to come up in the dmesg logs in the host
+sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -M q35,kernel-irqchip=split -device intel-iommu,intremap=on,caching-mode=on -kernel ../mainline_kernel/arch/x86_64/boot/bzImage -hda ../rfs_images/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 root=/dev/sda nokaslr" -L pc-bios -enable-kvm -m 1G -smp 2 -device virtio-net-pci,netdev=net0 -netdev tap,id=net0,vhost=on,ifname=tap0,script=no,downscript=no -runas `whoami` -device tmp123,id=sensor,address=0x49 -device tmp421,id=sensor1,address=0x1c -trace events=/tmp/events -D /tmp/qemu.log -d unimp
+
+11) To start with QMP OOB:
+
+sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -M q35,kernel-irqchip=split -device intel-iommu,intremap=on,caching-mode=on -kernel ../mainline_kernel/arch/x86_64/boot/bzImage -hda ../rfs_images/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 root=/dev/sda nokaslr" -L pc-bios -enable-kvm -m 1G -smp 2 -device virtio-net-pci,netdev=net0 -netdev tap,id=net0,vhost=on,ifname=tap0,script=no,downscript=no -runas `whoami` -device tmp123,id=sensor,address=0x49 -device tmp421,id=sensor1,address=0x1c -trace events=/tmp/events -D /tmp/qemu.log -d unimp -qmp tcp:localhost:4444,server,nowait
+
+/* Value set to 50000 because the number is divided by 1000 before setting the value */
+{"execute": "qom-set", "arguments": {"path": "sensor", "property":"temperature", "value":50000}}
+{"execute": "qom-get", "arguments": {"path": "sensor", "property":"temperature"}}
+
+
+
+In the command line do:
+
+sudo i2cdetect -y 0 0x21
+
+** In Qemu bring up the ethernet interface. Check for tap0 to come up 
+   in the dmesg logs in the host
 ** It takes time for tap interface to come up. After this do a dhclient -i enp0s*
 
 2) Busybox build:
@@ -165,3 +183,31 @@ sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -M q35,kernel-irqchip=sp
 	   If the above is not disabled Qemu will not hit any breakpoints set by remote GDB.
 	   *********************************************************************************
 	b) Use hbreak (hardware breakpoint) to set atleast the first breakpoint.
+
+9) Building Qemu:
+   =============
+
+	# Switch to the QEMU root directory.
+	cd qemu
+	# Prepare a native debug build.
+	mkdir -p bin/debug/native
+	cd bin/debug/native
+	# Configure QEMU and start the build.
+	../../../configure --enable-debug --enable-trace-backends=simple
+	make
+	# Return to the QEMU root directory.
+	cd ../../..
+	# For submodules especially for ROMS:
+	git submodule update --remote
+
+
+	For OpenGL and SDL support:
+	--------------------------
+	../../../configure --enable-debug --enable-trace-backends=simple --enable-sdl \
+	 --enable-opengl --enable-virglrenderer --enable-kvm
+
+		With doc support:
+		----------------
+		../../../configure --enable-debug --enable-trace-backends=simple --enable-docs \
+			--enable-virglrenderer --enable-opengl --enable-sdl --enable-curses
+

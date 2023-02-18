@@ -4,17 +4,17 @@ in Qemu.
 Steps:
 =====
 
-1) Enable TMP105(Bus addr 0x49) and TMP421(Bus addr 0x19) in Qemu by writing
+1) Enable TMP105(Bus addr 0x49) and TMP421(/*Bus addr 0x19*/ Bus addr 0x1c) in Qemu by writing
    -> Select TMP105 and TMP421 in Kconfig present in qemu/hw/i386 in the config Q35 CPU
 		section
 2) Enable User space I2C support, HWMON, LM25 for TMP105 and TMP421 drivers in the kernel
 3) Install sensors package in the RFS or build for Ubuntu etc
 4) To instantiate a device do the following:
 	sudo bash -c "echo tmp421 0x1c > new_device" where new_device file is present in
-	/sys/bus/i2c/device
+	/sys/bus/i2c/devices/i2c-0
 5) To delete the device do the following:
 	sudo bash -c "echo 0x1c > delete_device" where delete_device is present in
-	/sys/bus/i2c/device
+	/sys/bus/i2c/devices/i2c-0
 6) To startup with the following devices attached to I2C bus give the following command: 
 	sudo bin/debug/native/x86_64-softmmu/qemu-system-x86_64 -M q35,kernel-irqchip=split -device intel-iommu,intremap=on -kernel ../mainline_kernel/arch/x86_64/boot/bzImage -hda ../rfs_images/ubuntu_rfs/disco.img  -nographic -append "console=ttyS0 root=/dev/sda nokaslr" -L pc-bios -enable-kvm -m 1G -smp 2 -device virtio-net-pci,netdev=net0 -netdev tap,id=net0,vhost=on,ifname=tap0,script=no,downscript=no -runas `whoami` -device tmp105,id=sensor,address=0x49 -device tmp421,id=sensor1,address=0x1c
 7) Run command --> sensors to verify the list of SMBUS sensors. Following is the sample output:
@@ -76,3 +76,21 @@ Patch 1: [PATCH v3] chardev/char-i2c: Implement Linux I2C character device
 <f4bug> nascentmind: I posted SD card tests in python 2 years ago, I believe the way they work would ease your i2c device development/testing
 <f4bug> nascentmind: basically I exposed the SD bus over QMP so I could directly test the SD bus and the SD device without having a hardware implementation interfering with my goal
 <f4bug> nascentmind: see https://lists.gnu.org/archive/html/qemu-devel/2017-12/msg02349.html (QMP) and https://lists.gnu.org/archive/html/qemu-devel/2017-12/msg02350.html (Python tests)
+
+
+Qapi implementation
+-------------------
+
+<stefanha> nascentmind: Not that I'm aware of.  The point of using Visitor is so that a single string-output-visitor.c can encapsulate all the code for formatting ints/lists/etc as a string and qobject-output-visitor.c encapsulates creating QObjects.  Then you can pass either of them to get different types of output without modifying tmp105.
+<stefanha> nascentmind: So tmp105 doesn't know if it's reading/writing the temperature value from/to a QObject, a string, etc.  The Visitor is a layer of indirection.
+<stefanha> nascentmind: And the QAPI visitor autogenerates code for all the QMP API types (qapi/qapi-schema.json)
+
+QTest
+-----
+
+<stefanha> nascentmind: The 'qom-get' and 'qom-set' commands used by tests/tmp105-test.c are QMP commands that will work on a running QEMU.  The tmp105-test.c itself doesn't support connecting to a running QEMU process though.
+<stefanha> nascentmind: There are several possibilities: 1. run the QMP commands manually, 2. write a Python test script (similar to tmp105-test.c) using the qmp module in python/qemu/qmp.py, 3. hack tmp105-test.c to connect to a running QEMU instance.
+
+<stefanha> nascentmind: tmp105-test is a qtest program.  qtest is a special mode where QEMU accepts test operations (load/store memory, check for interrupts, etc) from a test program over a socket.
+<stefanha> nascentmind: tmp105-test runs as a process on the host.  It launches QEMU and talks to it over qtest and QMP.
+<stefanha> nascentmind: There is a video explaining qtest here: https://www.youtube.com/watch?v=4TSaMmrnHy8
